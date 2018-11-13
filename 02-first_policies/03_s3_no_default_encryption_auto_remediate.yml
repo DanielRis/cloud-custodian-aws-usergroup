@@ -1,0 +1,20 @@
+policies:
+  - name: s3_default_bucket_encryption
+    resource: s3
+    mode:
+      type: periodic
+      role: arn:aws:iam::{account_id}:role/cloud_custodian
+      schedule: 'cron(0/1 * * * ? *)'
+    filters:
+      - type: value
+        key: Name
+        op: regex
+        value: ^cc-demo-3.*$
+      - type: bucket-encryption
+        state: false
+    actions:
+      - type: set-bucket-encryption
+        enabled: true
+        crypto: aws:kms
+        key: alias/aws/s3
+

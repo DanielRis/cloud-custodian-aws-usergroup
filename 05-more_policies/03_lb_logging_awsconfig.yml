@@ -1,0 +1,20 @@
+policies:
+  - name: app-elb-logging
+    resource: app-elb
+    filters:
+      - and:
+        - type: value
+          key: LoadBalancerName
+          op: regex
+          value: ^cc-.*$
+        - type: value
+          key: Attributs."access_logs.s3.enabled"
+          value: False
+    mode:
+      type: config-rule
+      role: arn:aws:iam::{account_id}:role/cloud_custodian
+    actions:
+      - type: set-s3-logging
+        bucket: "{account_id}-{region}-lb-logs"
+        prefix: "{LoadBalancerName}"
+        state: enabled

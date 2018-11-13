@@ -1,0 +1,45 @@
+policies:
+  - name: s3-standards-cloudtrail
+    resource: s3
+    filters:
+      - and:
+        - type: value
+          key: Name
+          op: regex
+          value: ^cc-demo-5.*$
+        - or:
+          - type: bucket-encryption
+            state: False
+          - type: value
+            key: Logging.TargetBucket
+            op: not-equal
+            value: "{account_id}-{region}-s3-logs"
+          - type: value
+            key: Logging.TargetPrefix
+            op: not-equal
+            value: "{source_bucket_name}/"
+    mode:
+      type: cloudtrail
+      events:
+        - CreateBucket
+      role: arn:aws:iam::{account_id}:role/cloud_custodian
+      timeout: 200
+    actions:
+      - type: set-bucket-encryption
+        enabled: true
+        crypto: aws:kms
+        key: alias/aws/s3
+      - type: toggle-versioning
+        enabled: true
+      - type: toggle-logging
+        target_bucket: "{account_id}-{region}-s3-logs"
+        target_prefix: "{source_bucket_name}/"
+      - type: notify
+        template: default
+        subject: "[custodian {{ account }}] S3 Bucket was created with non-compliant settings - {{ region }}"
+        to:
+          - daniel.ristic@west.com
+        transport:
+          type: sqs
+          queue: https://sqs.us-east-1.amazonaws.com/{account_id}/cloud-custodian
+          

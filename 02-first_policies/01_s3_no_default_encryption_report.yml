@@ -1,0 +1,10 @@
+policies:
+  - name: s3_default_bucket_encryption
+    resource: s3
+    filters:
+      - type: value
+        key: Name
+        op: regex
+        value: ^cc-demo-1.*$
+      - type: bucket-encryption
+        state: false

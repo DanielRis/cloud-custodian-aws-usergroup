@@ -1,0 +1,27 @@
+policies:
+  - name: s3_default_bucket_encryption
+    resource: s3
+    mode:
+      role: arn:aws:iam::{account_id}:role/cloud_custodian
+      type: periodic
+      schedule: 'cron(0/1 * * * ? *)'
+    filters:
+      - type: value
+        key: Name
+        op: regex
+        value: ^cc-demo-4.*$
+      - type: bucket-encryption
+        state: false
+    actions:
+      - type: set-bucket-encryption
+        enabled: true
+        crypto: aws:kms
+        key: alias/aws/s3
+      - type: notify
+        template: default
+        subject: "[custodian {{ account }}] S3 default bucket encryption has been enabled - {{ region }}"
+        to:
+          - daniel.ristic@west.com
+        transport:
+          type: sqs
+          queue: https://sqs.us-east-1.amazonaws.com/{account_id}/cloud-custodian
